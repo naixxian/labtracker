@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Case Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f0f10;
+    --surface: #18181b;
+    --surface2: #1f1f23;
+    --border: #2a2a30;
+    --accent: #d4a853;
+    --accent2: #c17f3a;
+    --text: #e8e8ea;
+    --muted: #6b6b78;
+    --danger: #e05a5a;
+    --success: #4caf7d;
+    --warn: #d4a853;
+    --info: #5a9fd4;
+    --radius: 10px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-brand { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+  .header-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+
+  .staff-bar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 28px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .staff-label { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .staff-select {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-family: var(--sans);
+    font-size: 13px; padding: 6px 10px; outline: none; cursor: pointer; min-width: 180px;
+  }
+  .staff-select:focus { border-color: var(--accent); }
+  .staff-badge {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(212,168,83,0.12); border: 1px solid rgba(212,168,83,0.3);
+    border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--accent); font-weight: 500;
+  }
+  .staff-badge.visible { display: flex; }
+
+  .nav {
+    display: flex; gap: 4px; padding: 20px 28px 0;
+    border-bottom: 1px solid var(--border); overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 10px 18px; border-radius: var(--radius) var(--radius) 0 0;
+    border: 1px solid transparent; border-bottom: none;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    color: var(--muted); background: transparent; transition: all 0.15s;
+    white-space: nowrap; display: flex; align-items: center; gap: 7px;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--surface); }
+  .nav-tab.active {
+    color: var(--accent); background: var(--surface);
+    border-color: var(--border); border-bottom-color: var(--surface); margin-bottom: -1px;
+  }
+  .tab-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .nav-tab.active .tab-dot { opacity: 1; }
+
+  .main { padding: 28px; max-width: 760px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-header { margin-bottom: 24px; }
+  .section-tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; }
+  .section-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .section-desc { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+  .role-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .role-pill { font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px; font-family: var(--mono); text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .required { color: var(--danger); }
+
+  .field-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 7px; color: var(--text); font-family: var(--sans);
+    font-size: 14px; padding: 10px 12px; outline: none; transition: border-color 0.15s;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .field-input::placeholder { color: var(--muted); }
+
+  /* Searchable dropdown */
+  .search-dropdown-wrap { position: relative; }
+  .search-dropdown-wrap input { cursor: text; }
+  .dropdown-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; z-index: 50; max-height: 200px; overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .dropdown-item {
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    border-bottom: 1px solid var(--border); transition: background 0.1s;
+    line-height: 1.3;
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover { background: var(--surface2); }
+  .dropdown-item .item-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .dropdown-empty { padding: 12px 14px; font-size: 13px; color: var(--muted); text-align: center; }
+
+  .tag-group { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag-btn {
+    padding: 6px 13px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.12s; font-family: var(--sans);
+  }
+  .tag-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tag-btn.selected { background: rgba(212,168,83,0.15); border-color: var(--accent); color: var(--accent); }
+
+  .others-input-wrap { display: none; margin-top: 8px; }
+  .others-input-wrap.visible { display: block; }
+
+  .type-toggle {
+    display: flex; border: 1px solid var(--border);
+    border-radius: 7px; overflow: hidden; width: fit-content;
+  }
+  .type-btn {
+    padding: 8px 20px; background: var(--bg); border: none;
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: var(--sans); transition: all 0.12s;
+  }
+  .type-btn:first-child { border-right: 1px solid var(--border); }
+  .type-btn.selected { background: var(--accent); color: #000; }
+
+  .lab-group { display: flex; flex-wrap: wrap; gap: 7px; }
+  .lab-btn {
+    padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--muted); font-size: 12px;
+    font-family: var(--mono); cursor: pointer; transition: all 0.12s;
+  }
+  .lab-btn:hover { border-color: var(--info); color: var(--text); }
+  .lab-btn.selected { background: rgba(90,159,212,0.15); border-color: var(--info); color: var(--info); }
+
+  /* Photo capture */
+  .photo-capture-area {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s; position: relative;
+  }
+  .photo-capture-area:hover { border-color: var(--accent); }
+  .photo-capture-area.has-photo { border-color: var(--success); border-style: solid; }
+  .photo-capture-icon { font-size: 32px; margin-bottom: 8px; }
+  .photo-capture-text { font-size: 13px; color: var(--muted); }
+  .photo-capture-text strong { color: var(--text); }
+  .photo-preview {
+    width: 100%; max-height: 200px; object-fit: contain;
+    border-radius: 8px; margin-top: 12px; display: none;
+  }
+  .photo-preview.visible { display: block; }
+  .photo-retake {
+    margin-top: 8px; font-size: 12px; color: var(--accent);
+    cursor: pointer; text-decoration: underline; display: none;
+  }
+  .photo-retake.visible { display: block; }
+  input[type="file"] { display: none; }
+
+  .auto-stamp {
+    background: rgba(76,175,125,0.08); border: 1px solid rgba(76,175,125,0.2);
+    border-radius: 7px; padding: 10px 14px; font-size: 12px;
+    color: var(--success); display: flex; align-items: center; gap: 8px;
+  }
+
+  .info-box {
+    background: rgba(90,159,212,0.08); border: 1px solid rgba(90,159,212,0.25);
+    border-radius: 8px; padding: 12px 14px; font-size: 12px;
+    color: var(--info); margin-bottom: 16px; line-height: 1.5;
+  }
+
+  .field-textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 7px; color: var(--text); font-family: var(--sans);
+    font-size: 14px; padding: 10px 12px; outline: none; resize: vertical;
+    min-height: 72px; transition: border-color 0.15s;
+  }
+  .field-textarea:focus { border-color: var(--accent); }
+  .field-textarea::placeholder { color: var(--muted); }
+
+  .submit-btn {
+    width: 100%; padding: 13px; background: var(--accent);
+    border: none; border-radius: var(--radius); color: #000;
+    font-family: var(--sans); font-size: 14px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; margin-top: 8px;
+  }
+  .submit-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--success); color: #fff;
+    padding: 12px 24px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; z-index: 999;
+    transition: transform 0.3s ease; pointer-events: none; text-align: center;
+    max-width: 90vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--danger); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  @media (max-width: 600px) {
+    .main { padding: 16px; }
+    .nav { padding: 12px 16px 0; }
+    .staff-bar { padding: 10px 16px; }
+    .header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="header-icon">🦷</div>
+    <div>
+      <div class="header-title">Lab Case Tracker</div>
+      <div class="header-sub">Laboratory workflow management</div>
+    </div>
+  </div>
+  <div id="currentDateTime" style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;line-height:1.6;"></div>
+</div>
+
+<div class="staff-bar">
+  <span class="staff-label">Logged in as</span>
+  <select class="staff-select" id="staffSelect" onchange="onStaffChange()">
+    <option value="">— Select your name —</option>
+
+    <!-- ============================================================
+         STAFF LIST — Add new staff members here
+         Copy one line, change value and display name
+         ============================================================ -->
+    <optgroup label="Front Desk">
+      <option value="FD - Staff 1">Staff 1</option>
+      <option value="FD - Staff 2">Staff 2</option>
+      <option value="FD - Staff 3">Staff 3</option>
+    </optgroup>
+    <optgroup label="Lab Nurse">
+      <option value="Lab Nurse - Lab Nurse">Lab Nurse</option>
+      <option value="Lab Nurse - Asst Lab Nurse">Asst Lab Nurse</option>
+    </optgroup>
+    <optgroup label="Nurse">
+      <option value="Nurse - Nurse 1">Nurse 1</option>
+      <option value="Nurse - Nurse 2">Nurse 2</option>
+      <option value="Nurse - Nurse 3">Nurse 3</option>
+    </optgroup>
+    <optgroup label="Doctor">
+      <option value="Doctor - Dr A">Dr A</option>
+      <option value="Doctor - Dr B">Dr B</option>
+      <option value="Doctor - Dr C">Dr C</option>
+    </optgroup>
+    <!-- ============================================================ -->
+
+  </select>
+  <div class="staff-badge" id="staffBadge">
+    <span>●</span><span id="staffBadgeName"></span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="showTab('caseout')" id="tab-caseout">
+    <span class="tab-dot" style="background:var(--warn)"></span>Case Out
+  </button>
+  <button class="nav-tab" onclick="showTab('dispatch-out')" id="tab-dispatch-out">
+    <span class="tab-dot" style="background:var(--info)"></span>Dispatch Collected
+  </button>
+  <button class="nav-tab" onclick="showTab('casein')" id="tab-casein">
+    <span class="tab-dot" style="background:var(--success)"></span>Case In
+  </button>
+  <button class="nav-tab" onclick="showTab('casetaken')" id="tab-casetaken">
+    <span class="tab-dot" style="background:var(--danger)"></span>Case Taken
+  </button>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════
+     SECTION 1 — CASE OUT
+     ═══════════════════════════════════════════ -->
+<div class="section active" id="section-caseout">
+  <div class="section-header">
+    <div class="section-tag">Section 1</div>
+    <div class="section-title">Case Out</div>
+    <div class="section-desc">Log when a case is packed and placed at the case out basket. Take a photo before submitting.</div>
+    <div class="role-pills">
+      <span class="role-pill">Nurse</span>
+      <span class="role-pill">Lab Nurse</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Patient & Case Details</div>
+
+    <div class="field">
+      <div class="field-label">Patient Name <span class="required">*</span></div>
+      <input class="field-input" id="co-patient" type="text" placeholder="Full name as per record">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Treating Doctor <span class="required">*</span></div>
+      <input class="field-input" id="co-doctor" type="text" placeholder="Dr ___">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Case Type <span class="required">*</span> <span style="color:var(--muted);font-weight:400;font-size:11px;">(select all that apply)</span></div>
+      <div class="tag-group" id="caseTypeGroup">
+
+        <!-- ============================================================
+             CASE TYPES — Add new types here
+             Copy one line, change data-value and button text
+             Example:
+             <button class="tag-btn" data-value="Bite Splint" onclick="toggleTag(this,'caseTypeGroup')">Bite Splint</button>
+             ============================================================ -->
+        <button class="tag-btn" data-value="Crown" onclick="toggleTag(this,'caseTypeGroup')">Crown</button>
+        <button class="tag-btn" data-value="Bridge" onclick="toggleTag(this,'caseTypeGroup')">Bridge</button>
+        <button class="tag-btn" data-value="Denture" onclick="toggleTag(this,'caseTypeGroup')">Denture</button>
+        <button class="tag-btn" data-value="Retainer" onclick="toggleTag(this,'caseTypeGroup')">Retainer</button>
+        <button class="tag-btn" data-value="Night Guard" onclick="toggleTag(this,'caseTypeGroup')">Night Guard</button>
+        <button class="tag-btn" data-value="Surgical Guide" onclick="toggleTag(this,'caseTypeGroup')">Surgical Guide</button>
+        <button class="tag-btn" data-value="Implant Crown" onclick="toggleTag(this,'caseTypeGroup')">Implant Crown</button>
+        <button class="tag-btn" data-value="Onlay" onclick="toggleTag(this,'caseTypeGroup')">Onlay</button>
+        <button class="tag-btn" data-value="Veneer" onclick="toggleTag(this,'caseTypeGroup')">Veneer</button>
+        <button class="tag-btn" data-value="Others" onclick="toggleTag(this,'caseTypeGroup');toggleOthers('co-others-wrap',this)">Others</button>
+        <!-- ============================================================ -->
+
+      </div>
+      <div class="others-input-wrap" id="co-others-wrap">
+        <input class="field-input" id="co-others-text" placeholder="Describe case type..." style="margin-top:4px;">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Type <span class="required">*</span></div>
+      <div class="type-toggle">
+        <button class="type-btn" id="co-analog" onclick="selectType('Analog')">Analog</button>
+        <button class="type-btn" id="co-digital" onclick="selectType('Digital')">Digital</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Lab <span class="required">*</span></div>
+      <div class="lab-group" id="co-labGroup">
+
+        <!-- ============================================================
+             LABS — Add new labs here
+             Copy one line, change data-value and button text
+             ============================================================ -->
+        <button class="lab-btn" data-value="Alfonso" onclick="selectLab('co',this)">Alfonso</button>
+        <button class="lab-btn" data-value="Grand Align" onclick="selectLab('co',this)">Grand Align</button>
+        <button class="lab-btn" data-value="Rui Xue" onclick="selectLab('co',this)">Rui Xue</button>
+        <button class="lab-btn" data-value="Pioneer" onclick="selectLab('co',this)">Pioneer</button>
+        <button class="lab-btn" data-value="Big Dream" onclick="selectLab('co',this)">Big Dream</button>
+        <!-- ============================================================ -->
+
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Submitted Date <span class="required">*</span></div>
+      <input class="field-input" id="co-submitted" type="date">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Expected Return Date <span class="required">*</span></div>
+      <input class="field-input" id="co-return" type="date">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Remarks</div>
+      <textarea class="field-textarea" id="co-remarks" placeholder="Additional models, items attached, special instructions..."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Case Photo</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+      Take a photo of the packed case at the basket. Photo will be saved to Google Drive automatically when you submit. Required before submitting.
+    </p>
+    <div class="photo-capture-area" id="co-photo-area" onclick="triggerCamera('co-photo-input','co-photo-area','co-preview','co-retake')">
+      <div class="photo-capture-icon">📷</div>
+      <div class="photo-capture-text"><strong>Tap to take photo</strong><br>Case must be visible in the shot</div>
+      <img class="photo-preview" id="co-preview" alt="Case photo">
+    </div>
+    <div class="photo-retake" id="co-retake" onclick="triggerCamera('co-photo-input','co-photo-area','co-preview','co-retake')">↺ Retake photo</div>
+    <input type="file" id="co-photo-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'co-photo-area','co-preview','co-retake','co')">
+  </div>
+
+  <button class="submit-btn" id="co-submit" onclick="submitCaseOut()">Log Case Out →</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECTION 2 — DISPATCH COLLECTED
+     ═══════════════════════════════════════════ -->
+<div class="section" id="section-dispatch-out">
+  <div class="section-header">
+    <div class="section-tag">Section 2</div>
+    <div class="section-title">Dispatch Collected</div>
+    <div class="section-desc">Log when dispatch arrives and takes the case from the FD area. Time is recorded automatically when you tap submit.</div>
+    <div class="role-pills">
+      <span class="role-pill">Front Desk</span>
+      <span class="role-pill">Nurse</span>
+    </div>
+  </div>
+
+  <div class="info-box">
+    💡 <strong>Alfonso early pickup:</strong> Alfonso sends a photo to the FD phone before the clinic opens. When you arrive and see the photo, log this entry — the time will stamp when you press submit.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Select Patient</div>
+    <div class="field">
+      <div class="field-label">Patient Name <span class="required">*</span> <span style="font-size:11px;color:var(--muted);font-weight:400;">— from Case Out list</span></div>
+      <div class="search-dropdown-wrap">
+        <input class="field-input" id="do-patient-search" type="text" placeholder="Type to search cases logged out..." autocomplete="off"
+          oninput="filterDropdown('do')" onfocus="showDropdown('do')" onblur="hideDropdown('do')">
+        <div class="dropdown-list" id="do-dropdown" style="display:none;"></div>
+      </div>
+      <input type="hidden" id="do-patient-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Lab</div>
+      <div id="do-lab-display" style="font-size:14px;color:var(--muted);font-family:var(--mono);padding:4px 0;">— auto-filled from Case Out —</div>
+      <input type="hidden" id="do-lab-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Authorised by <span class="required">*</span> <span style="font-size:11px;color:var(--muted);font-weight:400;">— staff releasing the case</span></div>
+      <input class="field-input" id="do-auth" type="text" placeholder="Your name or staff releasing the case">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Remarks</div>
+      <textarea class="field-textarea" id="do-remarks" placeholder="e.g. Alfonso photo received at 7:45am, logged on arrival"></textarea>
+    </div>
+
+    <div class="auto-stamp" style="margin-top:4px;">
+      ✓ Date & time will be recorded automatically (Malaysia time) when you tap submit
+    </div>
+  </div>
+
+  <button class="submit-btn" id="do-submit" onclick="submitDispatchOut()">Log Dispatch Collected →</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECTION 3 — CASE IN
+     ═══════════════════════════════════════════ -->
+<div class="section" id="section-casein">
+  <div class="section-header">
+    <div class="section-tag">Section 3</div>
+    <div class="section-title">Case In</div>
+    <div class="section-desc">Log when dispatch returns a case and it is received at the FD drawer. Lab nurse collects from drawer at 4:30pm.</div>
+    <div class="role-pills">
+      <span class="role-pill">Front Desk</span>
+      <span class="role-pill">Nurse</span>
+      <span class="role-pill">Lab Nurse</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Select Patient</div>
+    <div class="field">
+      <div class="field-label">Patient Name <span class="required">*</span> <span style="font-size:11px;color:var(--muted);font-weight:400;">— from dispatched cases</span></div>
+      <div class="search-dropdown-wrap">
+        <input class="field-input" id="ci-patient-search" type="text" placeholder="Type to search dispatched cases..." autocomplete="off"
+          oninput="filterDropdown('ci')" onfocus="showDropdown('ci')" onblur="hideDropdown('ci')">
+        <div class="dropdown-list" id="ci-dropdown" style="display:none;"></div>
+      </div>
+      <input type="hidden" id="ci-patient-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Lab</div>
+      <div id="ci-lab-display" style="font-size:14px;color:var(--muted);font-family:var(--mono);padding:4px 0;">— auto-filled —</div>
+      <input type="hidden" id="ci-lab-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Received by <span class="required">*</span></div>
+      <input class="field-input" id="ci-received" type="text" placeholder="Your name">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Remarks</div>
+      <textarea class="field-textarea" id="ci-remarks" placeholder="Condition on arrival, any discrepancies..."></textarea>
+    </div>
+
+    <div class="auto-stamp" style="margin-top:4px;">
+      ✓ Date & time will be recorded automatically (Malaysia time) when you tap submit
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Receipt Photo</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+      Take a photo of the case received at the FD drawer to acknowledge receipt. Saved to Google Drive automatically on submit.
+    </p>
+    <div class="photo-capture-area" id="ci-photo-area" onclick="triggerCamera('ci-photo-input')">
+      <div class="photo-capture-icon">📷</div>
+      <div class="photo-capture-text"><strong>Tap to take photo</strong><br>Shows case received at drawer</div>
+      <img class="photo-preview" id="ci-preview" alt="Receipt photo">
+    </div>
+    <div class="photo-retake" id="ci-retake" onclick="triggerCamera('ci-photo-input')">↺ Retake photo</div>
+    <input type="file" id="ci-photo-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'ci-photo-area','ci-preview','ci-retake','ci')">
+  </div>
+
+  <button class="submit-btn" id="ci-submit" onclick="submitCaseIn()">Log Case In →</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECTION 4 — CASE TAKEN
+     ═══════════════════════════════════════════ -->
+<div class="section" id="section-casetaken">
+  <div class="section-header">
+    <div class="section-tag">Section 4</div>
+    <div class="section-title">Case Taken</div>
+    <div class="section-desc">Log when a case is taken from the cabinet to the doctor. Doctors also use this to acknowledge a digital case returned directly by the lab.</div>
+    <div class="role-pills">
+      <span class="role-pill">Nurse</span>
+      <span class="role-pill">Doctor</span>
+      <span class="role-pill">Runner Nurse</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">What are you logging?</div>
+    <div class="field">
+      <div class="type-toggle" style="width:100%;">
+        <button class="type-btn" id="ct-physical-btn" onclick="selectCaseTakenType('physical')" style="flex:1;">📦 Physical Case</button>
+        <button class="type-btn" id="ct-digital-btn" onclick="selectCaseTakenType('digital')" style="flex:1;">💻 Digital (Dr Acknowledge)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Case Details</div>
+
+    <div class="field">
+      <div class="field-label">Patient Name <span class="required">*</span></div>
+      <div class="search-dropdown-wrap">
+        <input class="field-input" id="ct-patient-search" type="text" placeholder="Type to search active cases..." autocomplete="off"
+          oninput="filterDropdown('ct')" onfocus="showDropdown('ct')" onblur="hideDropdown('ct')">
+        <div class="dropdown-list" id="ct-dropdown" style="display:none;"></div>
+      </div>
+      <input type="hidden" id="ct-patient-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Lab</div>
+      <div id="ct-lab-display" style="font-size:14px;color:var(--muted);font-family:var(--mono);padding:4px 0;">— auto-filled —</div>
+      <input type="hidden" id="ct-lab-val">
+    </div>
+
+    <div class="field">
+      <div class="field-label" id="ct-taken-label">Taken by <span class="required">*</span></div>
+      <input class="field-input" id="ct-taken" type="text" placeholder="Your name">
+    </div>
+
+    <div class="field">
+      <div class="field-label">Remarks</div>
+      <textarea class="field-textarea" id="ct-remarks" placeholder="Urgent case, sent without going through nurse, any notes for audit..."></textarea>
+    </div>
+
+    <div class="auto-stamp" style="margin-top:4px;">
+      ✓ Date & time will be recorded automatically (Malaysia time) when you tap submit
+    </div>
+  </div>
+
+  <button class="submit-btn" id="ct-submit-btn" onclick="submitCaseTaken()">Log Case Taken →</button>
+</div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// GOOGLE APPS SCRIPT URL — replace after deploying your script
+// ════════════════════════════════════════════════════════════
+const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+// ════════════════════════════════════════════════════════════
+
+// ── In-memory case store (synced from sheet on load) ──
+// Structure: { id, patientName, doctor, lab, type, submittedDate, expectedReturn, status }
+// status: 'logged' | 'dispatched' | 'received' | 'taken'
+let caseStore = [];
+const photoData = { co: '', ci: '' }; // base64 photos per section
+let caseOutType  = '';
+let caseTakenType = '';
+
+// ── Malaysian time ──
+function getMYTime() {
+  return new Date().toLocaleString('en-MY', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+}
+
+function getMYDate() {
+  return new Date().toLocaleDateString('en-MY', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+}
+
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('currentDateTime').innerHTML =
+    now.toLocaleDateString('en-MY', {timeZone:'Asia/Kuala_Lumpur',weekday:'short',day:'2-digit',month:'short',year:'numeric'}) +
+    '<br>' + now.toLocaleTimeString('en-MY', {timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',hour12:false});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Set today's date on Case Out submitted field ──
+window.addEventListener('load', () => {
+  const today = new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Kuala_Lumpur'}); // YYYY-MM-DD
+  const sub = document.getElementById('co-submitted');
+  if (sub) sub.value = today;
+  loadCasesFromSheet();
+});
+
+// ── Staff ──
+let currentStaff = '';
+function onStaffChange() {
+  const sel = document.getElementById('staffSelect');
+  currentStaff = sel.value;
+  const badge = document.getElementById('staffBadge');
+  const name  = document.getElementById('staffBadgeName');
+  if (currentStaff) {
+    const parts = currentStaff.split(' - ');
+    name.textContent = parts[parts.length - 1];
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
+  }
+}
+
+// ── Tabs ──
+function showTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  // Refresh dropdowns when switching tabs
+  if (tab === 'dispatch-out') buildDropdown('do');
+  if (tab === 'casein') buildDropdown('ci');
+  if (tab === 'casetaken') buildDropdown('ct');
+}
+
+// ── Tag Buttons ──
+function toggleTag(btn, groupId) { btn.classList.toggle('selected'); }
+function toggleOthers(wrapId, btn) {
+  document.getElementById(wrapId).classList.toggle('visible', btn.classList.contains('selected'));
+}
+function getSelectedTags(groupId) {
+  return Array.from(document.querySelectorAll('#' + groupId + ' .tag-btn.selected'))
+    .map(b => b.dataset.value).join(', ');
+}
+
+// ── Type Toggle ──
+function selectType(type) {
+  caseOutType = type;
+  document.getElementById('co-analog').classList.toggle('selected', type === 'Analog');
+  document.getElementById('co-digital').classList.toggle('selected', type === 'Digital');
+}
+
+// ── Lab Select ──
+function selectLab(prefix, btn) {
+  document.querySelectorAll('#' + prefix + '-labGroup .lab-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function getSelectedLab(prefix) {
+  const sel = document.querySelector('#' + prefix + '-labGroup .lab-btn.selected');
+  return sel ? sel.dataset.value : '';
+}
+
+// ── Case Taken Type ──
+function selectCaseTakenType(type) {
+  caseTakenType = type;
+  document.getElementById('ct-physical-btn').classList.toggle('selected', type === 'physical');
+  document.getElementById('ct-digital-btn').classList.toggle('selected', type === 'digital');
+  document.getElementById('ct-taken-label').innerHTML =
+    type === 'digital'
+      ? 'Acknowledged by (Doctor) <span class="required">*</span>'
+      : 'Taken by <span class="required">*</span>';
+  document.getElementById('ct-submit-btn').textContent =
+    type === 'digital' ? 'Log Digital Acknowledgement →' : 'Log Case Taken →';
+}
+
+// ── Photo Capture ──
+function triggerCamera(inputId) {
+  document.getElementById(inputId).click();
+}
+function handlePhoto(input, areaId, previewId, retakeId, section) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (section) photoData[section] = e.target.result;
+    const preview = document.getElementById(previewId);
+    const area    = document.getElementById(areaId);
+    const retake  = document.getElementById(retakeId);
+    preview.src = e.target.result;
+    preview.classList.add('visible');
+    area.classList.add('has-photo');
+    retake.classList.add('visible');
+    area.querySelector('.photo-capture-icon').textContent = '✅';
+    area.querySelector('.photo-capture-text').innerHTML = '<strong>Photo captured</strong><br>Tap retake to replace';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Toast ──
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Validation ──
+function requireStaff() {
+  if (!currentStaff) { showToast('Please select your name first.', true); return false; }
+  return true;
+}
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+// ════════════════════════════════════════════════════════════
+// SEARCHABLE DROPDOWN — patient names from case store
+// prefix: 'do' | 'ci' | 'ct'
+// 'do' shows status='logged' cases
+// 'ci' shows status='dispatched' cases
+// 'ct' shows all active cases (not 'taken')
+// ════════════════════════════════════════════════════════════
+function getCasesForPrefix(prefix) {
+  if (prefix === 'do') return caseStore.filter(c => c.status === 'logged');
+  if (prefix === 'ci') return caseStore.filter(c => c.status === 'dispatched');
+  if (prefix === 'ct') return caseStore.filter(c => c.status !== 'taken');
+  return caseStore;
+}
+
+function buildDropdown(prefix) {
+  const cases = getCasesForPrefix(prefix);
+  const search = val(prefix + '-patient-search').toLowerCase();
+  const filtered = search
+    ? cases.filter(c => c.patientName.toLowerCase().includes(search))
+    : cases;
+  const list = document.getElementById(prefix + '-dropdown');
+  if (!list) return;
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="dropdown-empty">No cases found</div>';
+  } else {
+    list.innerHTML = filtered.map(c =>
+      `<div class="dropdown-item" onmousedown="selectCase('${prefix}','${c.id}')">
+        <div>${c.patientName}</div>
+        <div class="item-sub">${c.lab} · ${c.type} · Expected ${c.expectedReturn}</div>
+      </div>`
+    ).join('');
+  }
+}
+
+function showDropdown(prefix) {
+  buildDropdown(prefix);
+  const list = document.getElementById(prefix + '-dropdown');
+  if (list) list.style.display = 'block';
+}
+
+function hideDropdown(prefix) {
+  setTimeout(() => {
+    const list = document.getElementById(prefix + '-dropdown');
+    if (list) list.style.display = 'none';
+  }, 200);
+}
+
+function filterDropdown(prefix) {
+  showDropdown(prefix);
+}
+
+function selectCase(prefix, caseId) {
+  const c = caseStore.find(x => x.id === caseId);
+  if (!c) return;
+  document.getElementById(prefix + '-patient-search').value = c.patientName;
+  document.getElementById(prefix + '-patient-val').value = c.id;
+  // Auto-fill lab display
+  const labDisplay = document.getElementById(prefix + '-lab-display');
+  const labVal     = document.getElementById(prefix + '-lab-val');
+  if (labDisplay) labDisplay.textContent = c.lab;
+  if (labDisplay) labDisplay.style.color = 'var(--info)';
+  if (labVal)     labVal.value = c.lab;
+  hideDropdown(prefix);
+}
+
+// ════════════════════════════════════════════════════════════
+// LOAD CASES FROM SHEET on startup
+// ════════════════════════════════════════════════════════════
+async function loadCasesFromSheet() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=GET_CASES');
+    const data = await res.json();
+    if (data && data.cases) {
+      caseStore = data.cases;
+    }
+  } catch(e) {
+    // If sheet not connected yet, caseStore stays empty — that's fine for testing
+    console.log('Sheet not connected yet — running in offline mode');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// SEND TO SHEET
+// ════════════════════════════════════════════════════════════
+async function sendToSheet(data) {
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return true;
+  } catch(e) {
+    console.error('Sheet error:', e);
+    return false;
+  }
+}
+
+// Add to local store immediately so dropdowns update without a reload
+function addToLocalStore(entry) {
+  const id = 'local-' + Date.now();
+  caseStore.push({ id, ...entry });
+  return id;
+}
+function updateLocalStatus(patientVal, newStatus) {
+  const c = caseStore.find(x => x.id === patientVal);
+  if (c) c.status = newStatus;
+}
+
+// ══════════════════════════════════════════════
+// SECTION 1 — CASE OUT SUBMIT
+// ══════════════════════════════════════════════
+async function submitCaseOut() {
+  if (!requireStaff()) return;
+  const patient  = val('co-patient');
+  const doctor   = val('co-doctor');
+  let caseTypes  = getSelectedTags('caseTypeGroup');
+  const othersText = val('co-others-text');
+  if (caseTypes.includes('Others') && othersText) {
+    caseTypes = caseTypes.replace('Others', 'Others: ' + othersText);
+  }
+  const lab      = getSelectedLab('co');
+  const submitted= val('co-submitted');
+  const returnDate = val('co-return');
+  const remarks  = val('co-remarks');
+
+  if (!patient || !doctor || !caseTypes || !caseOutType || !lab || !submitted || !returnDate) {
+    showToast('Please fill in all required fields.', true); return;
+  }
+  if (!photoData.co) {
+    showToast('Please take a photo of the case before submitting.', true); return;
+  }
+
+  const timestamp = getMYTime();
+  const data = {
+    action: 'CASE_OUT',
+    timestamp,
+    loggedBy: currentStaff,
+    patientName: patient,
+    doctor,
+    caseType: caseTypes,
+    type: caseOutType,
+    lab,
+    submittedDate: submitted,
+    expectedReturn: returnDate,
+    remarks,
+    photo: photoData.co  // base64 — script saves to Drive, stores link in sheet
+  };
+
+  const btn = document.getElementById('co-submit');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  await sendToSheet(data);
+
+  // Add to local store so dispatch dropdown works immediately
+  addToLocalStore({ patientName: patient, doctor, lab, type: caseOutType,
+    submittedDate: submitted, expectedReturn: returnDate, status: 'logged' });
+
+  showToast('✓ Case Out logged — ' + patient);
+  btn.disabled = false; btn.textContent = 'Log Case Out →';
+
+  // Clear
+  ['co-patient','co-doctor','co-remarks','co-others-text'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.querySelectorAll('#caseTypeGroup .tag-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('co-others-wrap').classList.remove('visible');
+  ['co-analog','co-digital'].forEach(id => document.getElementById(id).classList.remove('selected'));
+  document.querySelectorAll('#co-labGroup .lab-btn').forEach(b => b.classList.remove('selected'));
+  photoData.co = ''; caseOutType = '';
+  // Reset photo UI
+  const area = document.getElementById('co-photo-area');
+  const preview = document.getElementById('co-preview');
+  const retake = document.getElementById('co-retake');
+  area.classList.remove('has-photo');
+  preview.classList.remove('visible'); preview.src='';
+  retake.classList.remove('visible');
+  area.querySelector('.photo-capture-icon').textContent = '📷';
+  area.querySelector('.photo-capture-text').innerHTML = '<strong>Tap to take photo</strong><br>Case must be visible in the shot';
+  document.getElementById('co-photo-input').value='';
+  const today = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+  document.getElementById('co-submitted').value = today;
+  document.getElementById('co-return').value = '';
+}
+
+// ══════════════════════════════════════════════
+// SECTION 2 — DISPATCH COLLECTED SUBMIT
+// ══════════════════════════════════════════════
+async function submitDispatchOut() {
+  if (!requireStaff()) return;
+  const caseId   = val('do-patient-val');
+  const patient  = val('do-patient-search');
+  const lab      = val('do-lab-val');
+  const auth     = val('do-auth');
+  const remarks  = val('do-remarks');
+
+  if (!patient || !caseId || !lab || !auth) {
+    showToast('Please fill in all required fields.', true); return;
+  }
+
+  const timestamp = getMYTime();
+  const data = {
+    action: 'DISPATCH_COLLECTED',
+    timestamp,
+    loggedBy: currentStaff,
+    caseId,
+    patientName: patient,
+    lab,
+    authorisedBy: auth,
+    collectedAt: timestamp,
+    remarks
+  };
+
+  const btn = document.getElementById('do-submit');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await sendToSheet(data);
+  updateLocalStatus(caseId, 'dispatched');
+
+  showToast('✓ Dispatch logged — ' + patient);
+  btn.disabled = false; btn.textContent = 'Log Dispatch Collected →';
+  ['do-patient-search','do-auth','do-remarks'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('do-patient-val').value='';
+  document.getElementById('do-lab-val').value='';
+  document.getElementById('do-lab-display').textContent='— auto-filled from Case Out —';
+  document.getElementById('do-lab-display').style.color='var(--muted)';
+}
+
+// ══════════════════════════════════════════════
+// SECTION 3 — CASE IN SUBMIT
+// ══════════════════════════════════════════════
+async function submitCaseIn() {
+  if (!requireStaff()) return;
+  const caseId   = val('ci-patient-val');
+  const patient  = val('ci-patient-search');
+  const lab      = val('ci-lab-val');
+  const received = val('ci-received');
+  const remarks  = val('ci-remarks');
+
+  if (!patient || !caseId || !received) {
+    showToast('Please fill in all required fields.', true); return;
+  }
+
+  const timestamp = getMYTime();
+  const data = {
+    action: 'CASE_IN',
+    timestamp,
+    loggedBy: currentStaff,
+    caseId,
+    patientName: patient,
+    lab,
+    receivedBy: received,
+    receivedAt: timestamp,
+    remarks,
+    photo: photoData.ci
+  };
+
+  const btn = document.getElementById('ci-submit');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await sendToSheet(data);
+  updateLocalStatus(caseId, 'received');
+
+  showToast('✓ Case In logged — ' + patient);
+  btn.disabled = false; btn.textContent = 'Log Case In →';
+  ['ci-patient-search','ci-received','ci-remarks'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ci-patient-val').value='';
+  document.getElementById('ci-lab-val').value='';
+  document.getElementById('ci-lab-display').textContent='— auto-filled —';
+  document.getElementById('ci-lab-display').style.color='var(--muted)';
+  // Reset Case In photo
+  photoData.ci = '';
+  const ciArea = document.getElementById('ci-photo-area');
+  const ciPreview = document.getElementById('ci-preview');
+  const ciRetake = document.getElementById('ci-retake');
+  if (ciArea) {
+    ciArea.classList.remove('has-photo');
+    ciArea.querySelector('.photo-capture-icon').textContent = '📷';
+    ciArea.querySelector('.photo-capture-text').innerHTML = '<strong>Tap to take photo</strong><br>Shows case received at drawer';
+  }
+  if (ciPreview) { ciPreview.classList.remove('visible'); ciPreview.src=''; }
+  if (ciRetake)  ciRetake.classList.remove('visible');
+  document.getElementById('ci-photo-input').value='';
+}
+
+// ══════════════════════════════════════════════
+// SECTION 4 — CASE TAKEN SUBMIT
+// ══════════════════════════════════════════════
+async function submitCaseTaken() {
+  if (!requireStaff()) return;
+  if (!caseTakenType) { showToast('Please select Physical or Digital.', true); return; }
+  const caseId  = val('ct-patient-val');
+  const patient = val('ct-patient-search');
+  const lab     = val('ct-lab-val');
+  const takenBy = val('ct-taken');
+  const remarks = val('ct-remarks');
+
+  if (!patient || !caseId || !takenBy) {
+    showToast('Please fill in all required fields.', true); return;
+  }
+
+  const timestamp = getMYTime();
+  const data = {
+    action: 'CASE_TAKEN',
+    timestamp,
+    loggedBy: currentStaff,
+    caseKind: caseTakenType === 'digital' ? 'Digital Acknowledgement' : 'Physical Case',
+    caseId,
+    patientName: patient,
+    lab,
+    takenBy,
+    takenAt: timestamp,
+    remarks
+  };
+
+  const btn = document.getElementById('ct-submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await sendToSheet(data);
+  updateLocalStatus(caseId, 'taken');
+
+  showToast('✓ Case Taken logged — ' + patient);
+  btn.disabled = false;
+  btn.textContent = caseTakenType === 'digital' ? 'Log Digital Acknowledgement →' : 'Log Case Taken →';
+  ['ct-patient-search','ct-taken','ct-remarks'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ct-patient-val').value='';
+  document.getElementById('ct-lab-val').value='';
+  document.getElementById('ct-lab-display').textContent='— auto-filled —';
+  document.getElementById('ct-lab-display').style.color='var(--muted)';
+}
+</script>
+</body>
+</html>
