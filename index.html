@@ -630,7 +630,7 @@
 // ════════════════════════════════════════════════════════════
 // GOOGLE APPS SCRIPT URL — replace after deploying your script
 // ════════════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNkg5eGV4zVoekpzn369_LE9uCB1tp08PzKhCK7tRxIyn0oatHfcvAVsCdNbsSr_T-eA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu933D6p6SJNcp6HVJK0d5aAST-Evz7s0AV6mQ9To2MHR33aCvbcyvSaGtpQzVFYkcOg/exec';
 // ════════════════════════════════════════════════════════════
 
 // ── In-memory case store (synced from sheet on load) ──
@@ -685,11 +685,25 @@ function onStaffChange() {
   const name  = document.getElementById('staffBadgeName');
   if (currentStaff) {
     const parts = currentStaff.split(' - ');
-    name.textContent = parts[parts.length - 1];
+    const displayName = parts[parts.length - 1];
+    name.textContent = displayName;
     badge.classList.add('visible');
+    // Auto-fill all "taken by / received by / authorised by" fields
+    autoFillStaffFields(displayName);
   } else {
     badge.classList.remove('visible');
   }
+}
+
+function autoFillStaffFields(displayName) {
+  // Fill these fields automatically — staff can override if needed
+  const fields = ['ct-taken', 'ci-received', 'do-auth'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.manuallyEdited) {
+      el.value = displayName;
+    }
+  });
 }
 
 // ── Tabs ──
@@ -868,18 +882,51 @@ async function loadCasesFromSheet() {
 // SEND TO SHEET
 // ════════════════════════════════════════════════════════════
 async function sendToSheet(data) {
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    return true;
-  } catch(e) {
-    console.error('Sheet error:', e);
-    return false;
-  }
+  // Uses a hidden iframe trick + form POST to avoid CORS issues with Apps Script.
+  // Apps Script does not support CORS preflight — form POST sidesteps this entirely.
+  return new Promise((resolve) => {
+    try {
+      // Create a hidden iframe to absorb the response (we don't need to read it)
+      const iframeName = 'submit-frame-' + Date.now();
+      const iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      // Create a hidden form
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = SCRIPT_URL;
+      form.target = iframeName;
+      form.style.display = 'none';
+
+      // Pack all data into a single hidden field as JSON string
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = JSON.stringify(data);
+      form.appendChild(input);
+
+      document.body.appendChild(form);
+
+      // Clean up after submission
+      iframe.onload = () => {
+        setTimeout(() => {
+          document.body.removeChild(form);
+          document.body.removeChild(iframe);
+        }, 1000);
+        resolve(true);
+      };
+
+      // Fallback resolve after 5s in case onload doesn't fire
+      setTimeout(() => resolve(true), 5000);
+
+      form.submit();
+    } catch(e) {
+      console.error('Sheet error:', e);
+      resolve(false);
+    }
+  });
 }
 
 // Add to local store immediately so dropdowns update without a reload
